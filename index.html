@@ -1485,6 +1485,7 @@ function sendFeedback() {
   document.getElementById('fbGmail').textContent = t('fbGmail');
   document.getElementById('fbGmail').href = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(FEEDBACK_EMAIL)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   document.getElementById('fbResult').hidden = false;
+  document.getElementById('fbResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
   window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 function copyFeedback() {
