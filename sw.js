@@ -1,5 +1,5 @@
-// Service worker : met l'application en cache pour un usage hors ligne.
-const CACHE = 'chiffrage-fab-v1';
+// Service worker : réseau d'abord (toujours la dernière version), cache en secours pour le hors-ligne.
+const CACHE = 'chiffrage-fab-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -17,10 +17,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+    fetch(e.request).then(res => {
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy));
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }).catch(() => caches.match(e.request).then(hit => hit || caches.match('./index.html')))
   );
 });
