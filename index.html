@@ -562,6 +562,8 @@ const L = {
     exportTitle:'Export d\'archive (PDF en ZIP)', expFrom:'Du', expTo:'Au', exportBtn:'Exporter l\'archive (ZIP)',
     expNeedDates:'Choisissez une période.', expNone:'Aucun devis sur cette période.',
     folderDevis:'Devis', folderFiche:'Fiches-de-revient', folderFacture:'Factures',
+    proLocked:'L\'export d\'archive fait partie de la version complète (licence unique, 30 €). Saisissez votre code d\'activation pour le débloquer.',
+    proCode:'Code d\'activation', proActivate:'Activer', proOk:'Version complète activée. Merci !', proBad:'Code invalide. Vérifiez la saisie.',
     fbTitle:'Votre avis', fbRating:'Votre note', fbComment:'Commentaire', fbSuggest:'Suggestion d\'amélioration',
     fbSend:'Envoyer mon avis', fbEmpty:'Ajoutez une note, un commentaire ou une suggestion avant d\'envoyer.',
     fbPrivacy:'Votre avis est envoyé par votre messagerie. Rien n\'est stocké dans l\'application.',
@@ -618,6 +620,8 @@ const L = {
     exportTitle:'Archive export (PDF in ZIP)', expFrom:'From', expTo:'To', exportBtn:'Export archive (ZIP)',
     expNeedDates:'Choose a period.', expNone:'No quote in this period.',
     folderDevis:'Quotes', folderFiche:'Cost-sheets', folderFacture:'Invoices',
+    proLocked:'Archive export is part of the full version (one-time license, 30 €). Enter your activation code to unlock it.',
+    proCode:'Activation code', proActivate:'Activate', proOk:'Full version activated. Thank you!', proBad:'Invalid code. Check what you typed.',
     fbTitle:'Your feedback', fbRating:'Your rating', fbComment:'Comment', fbSuggest:'Suggestion for improvement',
     fbSend:'Send my feedback', fbEmpty:'Add a rating, a comment or a suggestion before sending.',
     fbPrivacy:'Your feedback is sent through your mail app. Nothing is stored in the application.',
@@ -954,11 +958,15 @@ function renderHistory() {
     <h3>${t('history')}</h3>
     ${p.quotes.length ? `<table>${rows}</table>` : `<p class="note">${t('noDocs')}</p>`}
     <h3>${t('exportTitle')}</h3>
-    <div class="grid">
+    ${isPro() ? `<div class="grid">
       <label>${t('expFrom')}<input type="date" id="expFrom" value="${new Date().getFullYear()}-01-01"></label>
       <label>${t('expTo')}<input type="date" id="expTo" value="${new Date().toLocaleDateString('sv-SE')}"></label>
     </div>
-    <div class="actions"><button onclick="exportArchive()">${t('exportBtn')}</button></div>
+    <div class="actions"><button onclick="exportArchive()">${t('exportBtn')}</button></div>` : `<div class="fbresult">
+      <p>${t('proLocked')}</p>
+      <div class="grid"><label>${t('proCode')}<input id="proCode" autocomplete="off"></label></div>
+      <div class="actions"><button onclick="activatePro()">${t('proActivate')}</button></div>
+    </div>`}
     <h3>${t('journal')}</h3>
     <div class="grid">
       <label>${t('material')}<select id="jMat">${p.materials.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></label>
@@ -1427,6 +1435,7 @@ function pdfDoc(p, q, type) {
 }
 
 async function exportArchive() {
+  if (!isPro()) { alert(t('proLocked')); return; }
   const p = P(); if (!p) return;
   const from = document.getElementById('expFrom').value, to = document.getElementById('expTo').value;
   if (!from || !to) { alert(t('expNeedDates')); return; }
@@ -1494,6 +1503,25 @@ function copyFeedback() {
   const done = () => alert(t('fbCopied'));
   if (navigator.clipboard) { navigator.clipboard.writeText(ta.value).then(done, () => { ta.select(); document.execCommand('copy'); done(); }); }
   else { ta.select(); document.execCommand('copy'); done(); }
+}
+
+// ---------- Version complète : activation hors ligne par code (seules les empreintes sont stockées) ----------
+var PRO_HASHES = ["9baa53348f3a70eab85e641955e29ebce39e1d9534cbbc0e9a5cb419aa0af604", "aa31b20a2f130670c3d967b894e854df790bbf9051ad82ac627248fe26e62625", "4d0add16f4024a0ab9a8f205490f2c67f04f85b74d520907ca0e26d9cc813c08", "fbef38fa8e820af06d95aa0fc0a93b19592cf8ee6d4821b8dd290396468449d8", "ed3982415a6420cc939e963d7b4546ca9797fbc6d1f211fe5f58a1edc261e963", "542ec3b0b09eae5f69d65665d833f1a724995ccc54940a72921dc09b85c18164", "e161d30022a88757a7a6e0ba7660628d0b2014e1d6da9e922aeac49df775d4c1", "6f84f8f0e7056853f209f794e845610609a23305ffa1e9a5e5638b1e7c3d57f6", "2dd6377b207d0445c29c918dd6dc696202e0545a40d9f3aef07ac4dbf1b6ac15", "efe1482e944f6435367164fa9188aaca82a81505815379c900ea83bfc7a2b962", "4c2bf78f4479c6282ed59810788e0ae6c16a57487991048248e266de0bec0c7f", "4bed5b6974a78e789bcc93e2e97e954929f4a6c2ce966032813c81fefa4ec344", "8c033e80d3a30d489707b81be8afec8f0294b7fdce197f7b0d24a2ac99f461a1", "0d0024735ea286f7eff68a0797287fe925a4d0a31f682e12a8810ab9d2218b4c", "9e4ffbee9975be80bea62ee2ccd4bb123dc35ab8811a7a528a51f0406d420a65", "52a327aac21326039fcc1315b22bde17ee3ce89186754f2c43a6608a71231fd2", "dd53df9c3c9e52e3e8c9eebc1802e925bd8f8d75ff2c4d74f896ba558e9f6cc2", "ce4cac792e0f50c577fc5299387492cf94d0838af0f2508542ddb15ddbecd589", "43eb45f98f3703cdc999ae656513ceb9fcf9956abb65af9c4b55144c73de32c8", "57c4cc371e1bece25545e3f0e5237489987da6646d0acfe7bceba930bb2bb724", "bfa370eb9b28f079b9cf13a3ee84a658860994ef71bc46378ed4ed31bfd8f491", "60a7ca922490f576fffc1f6f2d75fe4cb5db27deb25b7e7c4fbc7d5f983bcf66", "f2fe00144196ed60aac475d9518ed1d9f8249f8827c345334705a409605677cc", "41a3785555f691e172cfb17fe107a8b54e1411cf0901bfb11b24391281d1ca54", "e25745185fe626d1b023d799f5618ae20c94241b13096afe2793c52b30cbeb17", "49beb644438055e827bf061515d038295ed06746cb2c1aa1222e81d7f97bcc13", "77fcce6f3051592df121cd36f7db079fbf4bda328eb89c4d6f3331b0c003bda6", "350e9229ac7a3584dd21c6bbd24e07b8bb6836f1c7eec3f6363df8f770b2af9c", "2d67f8c4cb58d64ff06174ed407d2e1be4169b4add234acc3f9dac78b417421c", "6fb02e2d1743eb7ff78f9275681e0c259ab7bcdd9d6194d83b8fd1ace5335223", "6a596cc2077b41f2419b477f41cbedd08d996bed2de36df6c3d3d3681e13136f", "65aad2e31855791cda40e9a1c2a2cbe51c05507e635a4716a8cbf60934b9ef92", "4ade68f32b8312881906e40cfe27609dd9dc17120c05e6250bc08ae45153258f", "deac9d81c7d3ea13be3a2bb907a0eaa1d04c1dafe3ef888b64d4f32d22ef2944", "c2558c2d32c06e15f69395e03a6e4209e17a16bd85b85fd4a1ea69e025ff1baa", "7566ffc28470d5d65c6e5a08de928df7800a38359dac8ed062764fb4981248b8", "c3da4b4453d1e887a3f7c03282d9590400839aef2da16a6e583713f47bb7a5fa", "2df9bac67190827cf5063588ef9c7a782f51e7a56f248228f1ba002b81d81653", "4dbf929c7b407323a6b6d3c52a45068022b9013b71e96b489799366ececec97b", "05815ca1c222be75a90a1f8dc624fb31289a4a51453c33dc1259ba361a831388", "20d13665cf9dd91d83928082185541f040bbe04b5bdc189279ffd8b72911ee1c", "eb2e46e739cf927a5b603dd67ec01853fa17ab807c68260528f84d86ca94d98c", "1df051c81dff1906fdda79d1630bb4c28e6ca2c94081b42a942b3ab65a93d979", "a8b9439b725a02fe17d9626e71c0eabceb51f03bb62235587f6d47acce67ce14", "9b9c0161362f1087bc75d91980b44942dd6570563ea3cff4c8fed90c57d9ef2e", "66a5d60d0b0b000e53882aeb1e58c4c2e653878ace4a4ad38c6fa6eb8ad71c39", "6af383bbab59c64f6d39336bfcaed6d9e2d46838df4aab66e6d623c77fc9ccfa", "37ccf7ada53e117004cfee314365b3981645451886b0b53101e40f7734d5b272", "7952ef341587e04d657f135e8c6d03f981f1a31a362b92f14497e1e7495874bc", "1bb7d6ca734fc9fd9f0c6450339d53cecf664dd52e2c63eb644046022e5bd31a"];
+function isPro() {
+  try { return localStorage.getItem('bg3d81_pro') === '1'; } catch (e) { return false; }
+}
+async function sha256hex(str) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function activatePro() {
+  const raw = (document.getElementById('proCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  let ok = false;
+  try { ok = !!raw && PRO_HASHES.includes(await sha256hex(raw)); } catch (e) { ok = false; }
+  if (!ok) { alert(t('proBad')); return; }
+  try { localStorage.setItem('bg3d81_pro', '1'); } catch (e) {}
+  alert(t('proOk'));
+  renderApp(false);
 }
 </script>
 </body>
